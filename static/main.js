@@ -9,6 +9,9 @@ $(function () {
     };
     let drawing = false;
 
+    let colorBtn = $('#color-btn');
+    let clearBtn = $('#clear-btn');
+
     $.getJSON('/token', function(tokenResponse) {
         syncClient = new Twilio.Sync.Client(tokenResponse.token, { logLevel: 'info' });
         syncClient.on('connectionStateChanged', function(state) {
@@ -82,10 +85,34 @@ $(function () {
         canvas.height = window.innerHeight;
     }
 
+    function throttle(callback, delay) {
+        let previousCall = new Date().getTime();
+        return function() {
+            let time = new Date().getTime();
+
+            if ((time - previousCall) >= delay){
+                previousCall = time;
+                callback.apply(null, arguments);
+            }
+        }
+    }
+
+    function clearBoard() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+    };
+
+    function changeColor() {
+        current.color = '#' + Math.floor(Math.random() * 16777215).toString(16);  // change line color
+        colorBtn.css('border', '5px solid ' + current.color);  // change the button border color
+    };
+
+    colorBtn.on('click', changeColor);
+    clearBtn.on('click', clearBoard);
+
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('mouseout', onMouseUp);
-    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mousemove', throttle(onMouseMove, 10));
 
     window.addEventListener('resize', onResize);
     onResize();
