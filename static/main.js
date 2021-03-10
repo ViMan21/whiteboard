@@ -1,3 +1,32 @@
+$(".tool").click(function() {
+  $("#pen-tool").removeClass('button-clicked');
+  $("#line-tool").removeClass('button-clicked');
+  $("#arrow-tool").removeClass('button-clicked');
+  $("#rect-tool").removeClass('button-clicked');
+  $("#circle-tool").removeClass('button-clicked');
+  $("#diamond-tool").removeClass('button-clicked');
+});
+
+$("#pen-tool").click(function() {
+  $("#pen-tool").addClass('button-clicked');
+});
+$("#line-tool").click(function() {
+  $("#line-tool").addClass('button-clicked');
+});
+$("#arrow-tool").click(function() {
+  $("#arrow-tool").addClass('button-clicked');
+});
+$("#rect-tool").click(function() {
+  $("#rect-tool").addClass('button-clicked');
+});
+$("#circle-tool").click(function() {
+  $("#circle-tool").addClass('button-clicked');
+});
+$("#diamond-tool").click(function() {
+  $("#diamond-tool").addClass('button-clicked');
+});
+
+
 $(function () {
     let syncClient;
     let syncStream;

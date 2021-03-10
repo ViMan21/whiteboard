@@ -8,19 +8,22 @@
 </head>
 
 <body>
-    <div class="tips">
-        <p id="message">Initializing Sync...</p>
-        <p>Open this page in a few tabs to test!</p>
+    <div class="statusbar">
+        <div id="message">Initializing Sync...</div>
     </div>
 
-    <div class="buttons">
+    <div class="sidebar">
         <button id="color-btn" class="btn">Change Color</button>
         <button id="clear-btn" class="btn">Clear</button>
-    </div>   
+        <label for="color">Pen Color:</label>
+        <input type="color" id="pen-color" name="color">
+        <label for="size">Pen Size:</label>
+        <input type="number" id="pen-size" name="size" min="1" max="10" value="2">
+    </div>    
     <div class="toolbar">
         <button id="pen-tool" class="tool">&#x270E;</button>  
         <button id="line-tool" class="tool">&#x2014;</button>    
-        <button id="line-tool" class="tool">&#8594;</button>  
+        <button id="arrow-tool" class="tool">&#8594;</button>  
         <button id="rect-tool" class="tool">&#x274F;</button>  
         <button id="circle-tool" class="tool">&#x4f;</button>  
         <button id="diamond-tool" class="tool">&#x2662;</button>  
