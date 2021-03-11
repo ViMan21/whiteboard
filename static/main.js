@@ -30,24 +30,26 @@ $("#diamond-tool").click(function() {
 $(function () {
     let syncClient;
     let syncStream;
-    let message = $('#message');
+    let status = $('#status');
     let canvas = $('.whiteboard')[0];
+    let colorSelect = $("#pen-color");
+    let sizeSelect = $("#pen-size");
     let context = canvas.getContext('2d');
     let current = {
-        color: 'black'
+        color: colorSelect.val(),
+        size: sizeSelect.val()
     };
     let drawing = false;
 
-    let colorBtn = $('#color-btn');
     let clearBtn = $('#clear-btn');
 
     $.getJSON('/token', function(tokenResponse) {
         syncClient = new Twilio.Sync.Client(tokenResponse.token, { logLevel: 'info' });
         syncClient.on('connectionStateChanged', function(state) {
             if (state != 'connected') {
-                message.html('Sync is not live (websocket connection <span style="color: red">' + state + '</span>)...');
+                status.html('Sync is not live (websocket connection <span style="color: red">' + state + '</span>)...');
             } else {
-                message.html('Sync is live!');
+                status.html('Sync is live! <span style="color: #4dff2b">&#x2688;</span>');
             }
         });
 
@@ -55,24 +57,24 @@ $(function () {
         syncClient.stream('drawingData').then(function(stream) {
             syncStream = stream;
             syncStream.on('messagePublished', function(event) {
-                syncDrawingData(event.message.value);
+                syncDrawingData(event.status.value);
             });
 
             function syncDrawingData(data){
                 let w = canvas.width;
                 let h = canvas.height;
-                drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color);
+                drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
             }
         });
     });
 
-    function drawLine(x0, y0, x1, y1, color, syncStream){
+    function drawLine(x0, y0, x1, y1, color, size, syncStream){
 
         context.beginPath();
         context.moveTo(x0, y0);
         context.lineTo(x1, y1);
         context.strokeStyle = color;
-        context.lineWidth = 2;
+        context.lineWidth = size;
         context.stroke();
         context.closePath();
 
@@ -85,7 +87,8 @@ $(function () {
                 y0: y0 / h,
                 x1: x1 / w,
                 y1: y1 / h,
-                color: color
+                color: color,
+                size: size
             });
         }
     }
@@ -99,12 +102,12 @@ $(function () {
     function onMouseUp(e) {
         if (!drawing) { return; }
         drawing = false;
-        drawLine(current.x, current.y, e.clientX, e.clientY, current.color, syncStream);
+        drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
     }
 
     function onMouseMove(e) {
         if (!drawing) { return; }
-        drawLine(current.x, current.y, e.clientX, e.clientY, current.color, syncStream);
+        drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
         current.x = e.clientX;
         current.y = e.clientY;
     }
@@ -131,11 +134,16 @@ $(function () {
     };
 
     function changeColor() {
-        current.color = '#' + Math.floor(Math.random() * 16777215).toString(16);  // change line color
-        colorBtn.css('border', '5px solid ' + current.color);  // change the button border color
-    };
-
-    colorBtn.on('click', changeColor);
+        current.color = colorSelect.val();   // change line color
+        //colorSelect.css("border", "5px solid " + current.color); // change the button border color
+    }
+      
+    function changeSize() {
+        current.size = sizeSelect.val();
+    }
+    
+    colorSelect.on("blur", changeColor);
+    sizeSelect.on("blur", changeSize);
     clearBtn.on('click', clearBoard);
 
     canvas.addEventListener('mousedown', onMouseDown);
