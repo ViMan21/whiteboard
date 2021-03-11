@@ -57,7 +57,7 @@ $(function () {
         syncClient.stream('drawingData').then(function(stream) {
             syncStream = stream;
             syncStream.on('messagePublished', function(event) {
-                syncDrawingData(event.status.value);
+                syncDrawingData(event.message.value);
             });
 
             function syncDrawingData(data){
