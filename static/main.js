@@ -31,13 +31,23 @@ $(function () {
     let syncClient;
     let syncStream;
     let status = $('#status');
+
     let canvas = $('.whiteboard')[0];
+    let mask = $(".mask")[0];
+
     let colorSelect = $("#pen-color");
     let sizeSelect = $("#pen-size");
+
+    let storedLines = [];
+
+    let penTool = $("#pen-tool");
+    let lineTool = $("#line-tool");
+
     let context = canvas.getContext('2d');
     let current = {
         color: colorSelect.val(),
-        size: sizeSelect.val()
+        size: sizeSelect.val(),
+        tool: "pen",
     };
     let drawing = false;
 
@@ -77,7 +87,14 @@ $(function () {
         context.lineWidth = size;
         context.stroke();
         context.closePath();
-
+    
+        storedLines.push({x0 : x0, 
+            y0 : y0, 
+            x1 : x1, 
+            y1 : y1, 
+            color : color, 
+            size :  size});
+        
         if (syncStream) {
             let w = canvas.width;
             let h = canvas.height;
@@ -93,6 +110,16 @@ $(function () {
         }
     }
 
+    function drawLineWithSave(x0, y0, x1, y1, color, size) {
+        context.beginPath();
+        context.moveTo(x0, y0);
+        context.lineTo(x1, y1);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+    }
+
     function onMouseDown(e){
         drawing = true;
         current.x = e.clientX;
@@ -102,19 +129,44 @@ $(function () {
     function onMouseUp(e) {
         if (!drawing) { return; }
         drawing = false;
+        redrawStoredLines();
         drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
     }
 
     function onMouseMove(e) {
         if (!drawing) { return; }
-        drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
-        current.x = e.clientX;
-        current.y = e.clientY;
+        redrawStoredLines();
+        if (current.tool == 'pen'){
+            drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+            current.x = e.clientX;
+            current.y = e.clientY;
+        }
+        else if (current.tool == 'line'){
+          //clearBoard(maskContext);
+          drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size);
+        }
+    }
+
+    function redrawStoredLines() {
+        clearBoard(context);
+        if (storedLines.length == 0) {
+          return;
+        }
+        // redraw each stored line
+        for (var i = 0; i < storedLines.length; i++) {
+          context.beginPath();
+          context.moveTo(storedLines[i].x0, storedLines[i].y0);
+          context.lineTo(storedLines[i].x1, storedLines[i].y1);
+          context.strokeStyle = storedLines[i].color;
+          context.lineWidth = storedLines[i].size;
+          context.stroke();
+        }
     }
 
     function onResize(){
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        redrawStoredLines();
     }
 
     function throttle(callback, delay) {
@@ -129,9 +181,14 @@ $(function () {
         }
     }
 
-    function clearBoard() {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-    };
+    function clearBoard(ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+      
+    function clearAll() {
+        clearBoard(context);
+        storedLines.length = 0;
+    }
 
     function changeColor() {
         current.color = colorSelect.val();   // change line color
@@ -144,12 +201,18 @@ $(function () {
     
     colorSelect.on("blur", changeColor);
     sizeSelect.on("blur", changeSize);
-    clearBtn.on('click', clearBoard);
+    clearBtn.on('click', clearAll);
+    penTool.on("click", function(){
+        current.tool = "pen";
+    });
+    lineTool.on("click", function(){
+        current.tool = "line";
+    });
 
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('mouseout', onMouseUp);
-    canvas.addEventListener('mousemove', throttle(onMouseMove, 10));
+    mask.addEventListener('mousedown', onMouseDown);
+    mask.addEventListener('mouseup', onMouseUp);
+    mask.addEventListener('mouseout', onMouseUp);
+    mask.addEventListener('mousemove', throttle(onMouseMove, 10));
 
     window.addEventListener('resize', onResize);
     onResize();
