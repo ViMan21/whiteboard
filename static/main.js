@@ -43,6 +43,7 @@ $(function () {
     let penTool = $("#pen-tool");
     let lineTool = $("#line-tool");
     let arrowTool = $("#arrow-tool");
+    let rectTool = $("#rect-tool");
 
     let context = canvas.getContext('2d');
     let current = {
@@ -74,17 +75,59 @@ $(function () {
             function syncDrawingData(data){
                 let w = canvas.width;
                 let h = canvas.height;
-                if (data.tool == 'arrow'){
-                    drawArrowWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
-                } else {
-                    drawLineWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                switch (data.tool){
+                    case 'arrow':
+                        drawArrowWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                        break;
+                    case 'rect':
+                        drawRectWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                        break;
+                    case 'line':
+                        drawLineWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                        break;
+                    case 'pen':
+                        drawLineWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                        break;
                 }
             }
         });
     });
 
+    
+    function drawRectWithSave(x0, y0, x1, y1, color, size) {
+        context.beginPath();
+        context.moveTo(x0, y0);
+        context.lineTo(x0, y1);
+        context.lineTo(x1, y1);
+        context.lineTo(x1, y0);
+        context.lineTo(x0, y0);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+
+        store(x0, y0, x1, y1, color,  size, 'rect');
+        
+        if (syncStream) {
+            sendData(x0, y0, x1, y1, color, size, 'rect', syncStream);
+        }
+    }    
+
+    function drawRect(x0, y0, x1, y1, color, size) {
+        context.beginPath();
+        context.moveTo(x0, y0);
+        context.lineTo(x0, y1);
+        context.lineTo(x1, y1);
+        context.lineTo(x1, y0);
+        context.lineTo(x0, y0);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+    }
+
     function drawArrowWithSave(x0, y0, x1, y1, color, size, syncStream) {
-        let headlen = current.size*5; // length of head in pixels
+        let headlen = size*5; // length of head in pixels
         let dx = x1 - x0;
         let dy = y1 - y0;
         let angle = Math.atan2(dy, dx);
@@ -106,7 +149,7 @@ $(function () {
         store(x0, y0, x1, y1, color,  size, 'arrow');
 
         if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, current.tool, syncStream);
+            sendData(x0, y0, x1, y1, color, size, 'arrow', syncStream);
         }
 
     }
@@ -146,7 +189,7 @@ $(function () {
         store(x0, y0, x1, y1, color,  size, 'line');
         
         if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, current.tool, syncStream);
+            sendData(x0, y0, x1, y1, color, size, 'line', syncStream);
         }
     }
 
@@ -161,7 +204,7 @@ $(function () {
             y1: y1 / h,
             color: color,
             size: size,
-            tool: current.tool,
+            tool: tool,
         });
     }
 
@@ -195,28 +238,43 @@ $(function () {
         if (!drawing) { return; }
         drawing = false;
         redrawStoredLines();
-        if (current.tool == 'arrow'){
-            drawArrowWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
-        } else {
-            drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+        switch (current.tool){
+            case 'arrow':
+                drawArrowWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case 'rect':
+                drawRectWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case 'line':
+                drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case 'pen':
+                drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
         }
     }
 
     function onMouseMove(e) {
         if (!drawing) { return; }
         redrawStoredLines();
-        if (current.tool == 'pen'){
-            drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
-            current.x = e.clientX;
-            current.y = e.clientY;
+        
+        switch (current.tool){
+            case 'arrow':
+                drawArrow(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case 'rect':
+                drawRect(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case 'line':
+                drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case 'pen':
+                drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                current.x = e.clientX;
+                current.y = e.clientY;
+                break;
         }
-        if (current.tool == 'line'){
-          //clearBoard(maskContext);
-          drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size);
-        }
-        if (current.tool == 'arrow'){
-            drawArrow(current.x, current.y, e.clientX, e.clientY, current.color, current.size);
-        }
+
     }
 
     function redrawStoredLines() {
@@ -226,12 +284,23 @@ $(function () {
         }
         // redraw each stored line
         for (var i = 0; i < storedLines.length; i++) {
-          if (storedLines[i].tool == 'arrow'){
-              drawArrow(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
-                storedLines[i].color, storedLines[i].size);
-          } else {
-              drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
-                storedLines[i].color, storedLines[i].size);
+          switch (storedLines[i].tool){
+            case 'arrow':
+                drawArrow(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                    storedLines[i].color, storedLines[i].size);
+                break;
+            case 'rect':
+                drawRect(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                    storedLines[i].color, storedLines[i].size);
+                break;
+            case 'line':
+                drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                    storedLines[i].color, storedLines[i].size);
+                break;
+            case 'pen':
+                drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                    storedLines[i].color, storedLines[i].size);
+                break;
           }
         }
     }
@@ -283,6 +352,9 @@ $(function () {
     });
     arrowTool.on("click", function(){
       current.tool = "arrow";
+    });
+    rectTool.on("click", function(){
+      current.tool = "rect";
     });
 
     mask.addEventListener('mousedown', onMouseDown);
