@@ -94,7 +94,7 @@ $(function () {
     });
 
     
-    function drawRectWithSave(x0, y0, x1, y1, color, size) {
+    function drawRectWithSave(x0, y0, x1, y1, color, size, syncStream) {
         context.beginPath();
         context.moveTo(x0, y0);
         context.lineTo(x0, y1);
