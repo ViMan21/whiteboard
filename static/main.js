@@ -28,6 +28,12 @@ $("#diamond-tool").click(function() {
 
 
 $(function () {
+    const PEN_TOOL = 'pen';
+    const LINE_TOOL = 'line';
+    const ARROW_TOOL = 'arrow';
+    const RECT_TOOL = 'rect';
+    const CIRCLE_TOOL = 'circle';
+
     let syncClient;
     let syncStream;
     let status = $('#status');
@@ -44,6 +50,7 @@ $(function () {
     let lineTool = $("#line-tool");
     let arrowTool = $("#arrow-tool");
     let rectTool = $("#rect-tool");
+    let circleTool = $("#circle-tool");
 
     let context = canvas.getContext('2d');
     let current = {
@@ -76,16 +83,19 @@ $(function () {
                 let w = canvas.width;
                 let h = canvas.height;
                 switch (data.tool){
-                    case 'arrow':
+                    case CIRCLE_TOOL:
+                        drawCircleWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                        break;
+                    case ARROW_TOOL:
                         drawArrowWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
                         break;
-                    case 'rect':
+                    case RECT_TOOL:
                         drawRectWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
                         break;
-                    case 'line':
+                    case LINE_TOOL:
                         drawLineWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
                         break;
-                    case 'pen':
+                    case PEN_TOOL:
                         drawLineWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
                         break;
                 }
@@ -93,7 +103,36 @@ $(function () {
         });
     });
 
-    
+    function drawCircle(x0, y0, x1, y1, color, size) {
+        let dx = x1 - x0;
+        let dy = y1 - y0;
+        let radius=Math.sqrt(dx*dx+dy*dy);
+        context.beginPath();
+        context.arc(x0, y0, radius, 0, 2 * Math.PI);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+    }
+
+    function drawCircleWithSave(x0, y0, x1, y1, color, size, syncStream) {
+        let dx = x1 - x0;
+        let dy = y1 - y0;
+        let radius=Math.sqrt(dx*dx+dy*dy);
+        context.beginPath();
+        context.arc(x0, y0, radius, 0, 2 * Math.PI);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+        
+        store(x0, y0, x1, y1, color,  size, CIRCLE_TOOL);
+        
+        if (syncStream) {
+            sendData(x0, y0, x1, y1, color, size, CIRCLE_TOOL, syncStream);
+        }
+    }
+
     function drawRectWithSave(x0, y0, x1, y1, color, size, syncStream) {
         context.beginPath();
         context.moveTo(x0, y0);
@@ -106,10 +145,10 @@ $(function () {
         context.stroke();
         context.closePath();
 
-        store(x0, y0, x1, y1, color,  size, 'rect');
+        store(x0, y0, x1, y1, color,  size, RECT_TOOL);
         
         if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, 'rect', syncStream);
+            sendData(x0, y0, x1, y1, color, size, RECT_TOOL, syncStream);
         }
     }    
 
@@ -146,10 +185,10 @@ $(function () {
         
         context.setTransform(1,0,0,1,0,0);
 
-        store(x0, y0, x1, y1, color,  size, 'arrow');
+        store(x0, y0, x1, y1, color,  size, ARROW_TOOL);
 
         if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, 'arrow', syncStream);
+            sendData(x0, y0, x1, y1, color, size, ARROW_TOOL, syncStream);
         }
 
     }
@@ -186,10 +225,10 @@ $(function () {
         context.stroke();
         context.closePath();
     
-        store(x0, y0, x1, y1, color,  size, 'line');
+        store(x0, y0, x1, y1, color,  size, LINE_TOOL);
         
         if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, 'line', syncStream);
+            sendData(x0, y0, x1, y1, color, size, LINE_TOOL, syncStream);
         }
     }
 
@@ -239,16 +278,19 @@ $(function () {
         drawing = false;
         redrawStoredLines();
         switch (current.tool){
-            case 'arrow':
+            case CIRCLE_TOOL:
+                drawCircleWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case ARROW_TOOL:
                 drawArrowWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
-            case 'rect':
+            case RECT_TOOL:
                 drawRectWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
-            case 'line':
+            case LINE_TOOL:
                 drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
-            case 'pen':
+            case PEN_TOOL:
                 drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
         }
@@ -259,16 +301,19 @@ $(function () {
         redrawStoredLines();
         
         switch (current.tool){
-            case 'arrow':
+            case CIRCLE_TOOL:
+                drawCircle(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
+            case ARROW_TOOL:
                 drawArrow(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
-            case 'rect':
+            case RECT_TOOL:
                 drawRect(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
-            case 'line':
+            case LINE_TOOL:
                 drawLine(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
-            case 'pen':
+            case PEN_TOOL:
                 drawLineWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 current.x = e.clientX;
                 current.y = e.clientY;
@@ -285,19 +330,23 @@ $(function () {
         // redraw each stored line
         for (var i = 0; i < storedLines.length; i++) {
           switch (storedLines[i].tool){
-            case 'arrow':
+            case CIRCLE_TOOL:
+                drawCircle(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                    storedLines[i].color, storedLines[i].size);
+                break;
+            case ARROW_TOOL:
                 drawArrow(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
                     storedLines[i].color, storedLines[i].size);
                 break;
-            case 'rect':
+            case RECT_TOOL:
                 drawRect(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
                     storedLines[i].color, storedLines[i].size);
                 break;
-            case 'line':
+            case LINE_TOOL:
                 drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
                     storedLines[i].color, storedLines[i].size);
                 break;
-            case 'pen':
+            case PEN_TOOL:
                 drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
                     storedLines[i].color, storedLines[i].size);
                 break;
@@ -345,16 +394,19 @@ $(function () {
     sizeSelect.on("blur", changeSize);
     clearBtn.on('click', clearAll);
     penTool.on("click", function(){
-        current.tool = "pen";
+        current.tool = PEN_TOOL;
     });
     lineTool.on("click", function(){
-        current.tool = "line";
+        current.tool = LINE_TOOL;
     });
     arrowTool.on("click", function(){
-      current.tool = "arrow";
+      current.tool = ARROW_TOOL;
     });
     rectTool.on("click", function(){
-      current.tool = "rect";
+      current.tool = RECT_TOOL;
+    });
+    circleTool.on("click", function(){
+      current.tool = CIRCLE_TOOL;
     });
 
     mask.addEventListener('mousedown', onMouseDown);
