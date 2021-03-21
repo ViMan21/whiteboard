@@ -137,9 +137,12 @@ $(function () {
     function drawCircle(x0, y0, x1, y1, color, size) {
         let dx = x1 - x0;
         let dy = y1 - y0;
-        let radius=Math.sqrt(dx*dx+dy*dy);
+        let radius = ((Math.abs(dx) <= Math.abs(dy)) ? Math.abs(dx/2) : Math.abs(dy/2));
+        let xIncrement = radius * (dx/Math.abs(dx));
+        let yIncrement = radius * (dy/Math.abs(dy));
+        //let radius=Math.sqrt(dx*dx+dy*dy);
         context.beginPath();
-        context.arc(x0, y0, radius, 0, 2 * Math.PI);
+        context.arc(x0+xIncrement, y0+yIncrement, Math.abs(radius), 0, 2 * Math.PI);
         context.strokeStyle = color;
         context.lineWidth = size;
         context.stroke();
