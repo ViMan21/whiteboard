@@ -249,10 +249,12 @@ $(function () {
     }
 
     function store(x0, y0, x1, y1, color, size, tool){
-        storedLines.push({x0 : x0, 
-            y0 : y0, 
-            x1 : x1, 
-            y1 : y1, 
+        let w = canvas.width;
+        let h = canvas.height;
+        storedLines.push({x0 : x0 / w, 
+            y0 : y0 / h, 
+            x1 : x1 / w, 
+            y1 : y1 / h, 
             color : color, 
             size :  size,
             tool: tool});
@@ -320,6 +322,9 @@ $(function () {
     }
 
     function redrawStoredLines() {
+        let w = canvas.width;
+        let h = canvas.height;
+        
         clearBoard(context);
         if (storedLines.length == 0) {
           return;
@@ -328,27 +333,27 @@ $(function () {
         for (var i = 0; i < storedLines.length; i++) {
           switch (storedLines[i].tool){
             case DIAMOND_TOOL:
-                drawDiamond(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                drawDiamond(storedLines[i].x0 * w, storedLines[i].y0 * h, storedLines[i].x1 * w, storedLines[i].y1 *h,
                     storedLines[i].color, storedLines[i].size);
                 break;
             case CIRCLE_TOOL:
-                drawCircle(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                drawCircle(storedLines[i].x0 * w, storedLines[i].y0 * h, storedLines[i].x1 * w, storedLines[i].y1 *h,
                     storedLines[i].color, storedLines[i].size);
                 break;
             case ARROW_TOOL:
-                drawArrow(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                drawArrow(storedLines[i].x0 * w, storedLines[i].y0 * h, storedLines[i].x1 * w, storedLines[i].y1 *h,
                     storedLines[i].color, storedLines[i].size);
                 break;
             case RECT_TOOL:
-                drawRect(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                drawRect(storedLines[i].x0 * w, storedLines[i].y0 * h, storedLines[i].x1 * w, storedLines[i].y1 *h,
                     storedLines[i].color, storedLines[i].size);
                 break;
             case LINE_TOOL:
-                drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                drawLine(storedLines[i].x0 * w, storedLines[i].y0 * h, storedLines[i].x1 * w, storedLines[i].y1 *h,
                     storedLines[i].color, storedLines[i].size);
                 break;
             case PEN_TOOL:
-                drawLine(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                drawLine(storedLines[i].x0 * w, storedLines[i].y0 * h, storedLines[i].x1 * w, storedLines[i].y1 *h,
                     storedLines[i].color, storedLines[i].size);
                 break;
           }
