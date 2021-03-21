@@ -33,6 +33,7 @@ $(function () {
     const ARROW_TOOL = 'arrow';
     const RECT_TOOL = 'rect';
     const CIRCLE_TOOL = 'circle';
+    const DIAMOND_TOOL = 'diamond';
 
     let syncClient;
     let syncStream;
@@ -51,6 +52,7 @@ $(function () {
     let arrowTool = $("#arrow-tool");
     let rectTool = $("#rect-tool");
     let circleTool = $("#circle-tool");
+    let diamondTool = $("#diamond-tool");
 
     let context = canvas.getContext('2d');
     let current = {
@@ -83,6 +85,9 @@ $(function () {
                 let w = canvas.width;
                 let h = canvas.height;
                 switch (data.tool){
+                    case DIAMOND_TOOL:
+                        drawDiamondWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+                        break;
                     case CIRCLE_TOOL:
                         drawCircleWithSave(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
                         break;
@@ -103,6 +108,32 @@ $(function () {
         });
     });
 
+    function drawDiamond(x0, y0, x1, y1, color, size) {
+        let dy = (y0 + y1) / 2;
+        let dx = (x0 + x1) / 2;
+        
+        context.beginPath();
+        context.moveTo(dx, y0);
+        context.lineTo(x1, dy);
+        context.lineTo(dx, y1);
+        context.lineTo(x0, dy);
+        context.lineTo(dx, y0);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+    }
+
+    function drawDiamondWithSave(x0, y0, x1, y1, color, size, syncStream) {
+        drawDiamond(x0, y0, x1, y1, color, size)
+        
+        store(x0, y0, x1, y1, color,  size, DIAMOND_TOOL);
+        
+        if (syncStream) {
+            sendData(x0, y0, x1, y1, color, size, DIAMOND_TOOL, syncStream);
+        }
+    }  
+
     function drawCircle(x0, y0, x1, y1, color, size) {
         let dx = x1 - x0;
         let dy = y1 - y0;
@@ -116,41 +147,14 @@ $(function () {
     }
 
     function drawCircleWithSave(x0, y0, x1, y1, color, size, syncStream) {
-        let dx = x1 - x0;
-        let dy = y1 - y0;
-        let radius=Math.sqrt(dx*dx+dy*dy);
-        context.beginPath();
-        context.arc(x0, y0, radius, 0, 2 * Math.PI);
-        context.strokeStyle = color;
-        context.lineWidth = size;
-        context.stroke();
-        context.closePath();
+        drawCircle(x0, y0, x1, y1, color, size)
         
         store(x0, y0, x1, y1, color,  size, CIRCLE_TOOL);
         
         if (syncStream) {
             sendData(x0, y0, x1, y1, color, size, CIRCLE_TOOL, syncStream);
         }
-    }
-
-    function drawRectWithSave(x0, y0, x1, y1, color, size, syncStream) {
-        context.beginPath();
-        context.moveTo(x0, y0);
-        context.lineTo(x0, y1);
-        context.lineTo(x1, y1);
-        context.lineTo(x1, y0);
-        context.lineTo(x0, y0);
-        context.strokeStyle = color;
-        context.lineWidth = size;
-        context.stroke();
-        context.closePath();
-
-        store(x0, y0, x1, y1, color,  size, RECT_TOOL);
-        
-        if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, RECT_TOOL, syncStream);
-        }
-    }    
+    }  
 
     function drawRect(x0, y0, x1, y1, color, size) {
         context.beginPath();
@@ -165,33 +169,15 @@ $(function () {
         context.closePath();
     }
 
-    function drawArrowWithSave(x0, y0, x1, y1, color, size, syncStream) {
-        let headlen = size*5; // length of head in pixels
-        let dx = x1 - x0;
-        let dy = y1 - y0;
-        let angle = Math.atan2(dy, dx);
-        let length=Math.sqrt(dx*dx+dy*dy);
-        context.translate(x0,y0);
-        context.rotate(angle);
-        context.beginPath();
-        context.moveTo(0,0);
-        context.lineTo(length,0);
-        context.moveTo(length-headlen,-(size*2));
-        context.lineTo(length,0);
-        context.lineTo(length-headlen,size*2);
-        context.strokeStyle = color;
-        context.lineWidth = size;
-        context.stroke();
+    function drawRectWithSave(x0, y0, x1, y1, color, size, syncStream) {
+        drawRect(x0, y0, x1, y1, color, size)
+
+        store(x0, y0, x1, y1, color,  size, RECT_TOOL);
         
-        context.setTransform(1,0,0,1,0,0);
-
-        store(x0, y0, x1, y1, color,  size, ARROW_TOOL);
-
         if (syncStream) {
-            sendData(x0, y0, x1, y1, color, size, ARROW_TOOL, syncStream);
+            sendData(x0, y0, x1, y1, color, size, RECT_TOOL, syncStream);
         }
-
-    }
+    }  
 
     function drawArrow(x0, y0, x1, y1, color, size) {
         let headlen = size*5; // length of head in pixels
@@ -212,11 +198,19 @@ $(function () {
         context.stroke();
         
         context.setTransform(1,0,0,1,0,0);
-
     }
 
-    function drawLineWithSave(x0, y0, x1, y1, color, size, syncStream){
+    function drawArrowWithSave(x0, y0, x1, y1, color, size, syncStream) {
+        drawArrow(x0, y0, x1, y1, color, size)
 
+        store(x0, y0, x1, y1, color,  size, ARROW_TOOL);
+
+        if (syncStream) {
+            sendData(x0, y0, x1, y1, color, size, ARROW_TOOL, syncStream);
+        }
+    }
+
+    function drawLine(x0, y0, x1, y1, color, size) {
         context.beginPath();
         context.moveTo(x0, y0);
         context.lineTo(x1, y1);
@@ -224,6 +218,10 @@ $(function () {
         context.lineWidth = size;
         context.stroke();
         context.closePath();
+    }
+
+    function drawLineWithSave(x0, y0, x1, y1, color, size, syncStream){
+        drawLine(x0, y0, x1, y1, color, size)
     
         store(x0, y0, x1, y1, color,  size, LINE_TOOL);
         
@@ -257,16 +255,6 @@ $(function () {
             tool: tool});
     }
 
-    function drawLine(x0, y0, x1, y1, color, size) {
-        context.beginPath();
-        context.moveTo(x0, y0);
-        context.lineTo(x1, y1);
-        context.strokeStyle = color;
-        context.lineWidth = size;
-        context.stroke();
-        context.closePath();
-    }
-
     function onMouseDown(e){
         drawing = true;
         current.x = e.clientX;
@@ -278,6 +266,9 @@ $(function () {
         drawing = false;
         redrawStoredLines();
         switch (current.tool){
+            case DIAMOND_TOOL:
+                drawDiamondWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
             case CIRCLE_TOOL:
                 drawCircleWithSave(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
@@ -301,6 +292,9 @@ $(function () {
         redrawStoredLines();
         
         switch (current.tool){
+            case DIAMOND_TOOL:
+                drawDiamond(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
+                break;
             case CIRCLE_TOOL:
                 drawCircle(current.x, current.y, e.clientX, e.clientY, current.color, current.size, syncStream);
                 break;
@@ -330,6 +324,10 @@ $(function () {
         // redraw each stored line
         for (var i = 0; i < storedLines.length; i++) {
           switch (storedLines[i].tool){
+            case DIAMOND_TOOL:
+                drawDiamond(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
+                    storedLines[i].color, storedLines[i].size);
+                break;
             case CIRCLE_TOOL:
                 drawCircle(storedLines[i].x0, storedLines[i].y0, storedLines[i].x1, storedLines[i].y1,
                     storedLines[i].color, storedLines[i].size);
@@ -407,6 +405,9 @@ $(function () {
     });
     circleTool.on("click", function(){
       current.tool = CIRCLE_TOOL;
+    });
+    diamondTool.on("click", function(){
+      current.tool = DIAMOND_TOOL;
     });
 
     mask.addEventListener('mousedown', onMouseDown);
