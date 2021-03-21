@@ -13,7 +13,7 @@ $ . venv/bin/activate  # use "venv\Scripts\activate" on Windows
 (venv) $ pip install -r requirements.txt
 ```
 
-Create a `.env` file and fill with variables in `app.py` (You will need to register a free [Twilio account](www.twilio.com/referral/huG0FJ)).
+Create a `.env` file and fill with variables in `app.py` (You will need to register a free [Twilio account](https://www.twilio.com/referral/huG0FJ)).
 
 Run the application with:
 ```
