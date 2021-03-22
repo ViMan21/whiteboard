@@ -423,6 +423,11 @@ $(function () {
     mask.addEventListener('mouseout', onMouseUp);
     mask.addEventListener('mousemove', throttle(onMouseMove, 10));
 
+    mask.addEventListener('touchstart', onMouseDown);
+    mask.addEventListener('touchend', onMouseUp);
+    mask.addEventListener('touchcancel', onMouseUp);
+    mask.addEventListener('touchmove', throttle(onMouseMove, 10));
+
     window.addEventListener('resize', onResize);
     onResize();
     
