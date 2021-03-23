@@ -2,6 +2,8 @@
 
 This whiteboard app is adaptive from the tutorial from: https://www.twilio.com/blog/collaborative-whiteboard-python-flask-twilio-sync
 
+![](whiteboard_demo.gif)
+
 ## Installation
 
 Clone the repo and build the environment:
